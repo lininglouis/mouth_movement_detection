@@ -77,12 +77,42 @@ def fetchTimePairs(path):
         return timePairs
 
 
+def getTimeVerticalLine(timeSecond, setting):
 
+    height, width, cap
+ader = setting.height, setting.width, setting.capReader
+    correspond_framePos = capReader.time2frameIdx(timeSecond)
+    x_offset = (correspond_framePos / capReader.frame_counts) * width  
+
+    verticalLine_list = []
+    for i in np.linspace(0, height, 100):
+        verticalLine_list.append( (x_offset, i) )
+    vertical_data = np.array([verticalLine_list]).astype(np.int32)
+    return vertical_data
+
+
+def drawLines(frame, pairs, setting):
+    RGB = [(0,0,255), (0,255,0), (255,0,0)]
+    for idx, pair in enumerate(pairs):
+        vert_data_start = getTimeVerticalLine(timeSecond=pair[0], setting=setting)
+        cv2.polylines(frame, vert_data_start, False, RGB[idx % 3], 2)
+        vert_data_end = getTimeVerticalLine(timeSecond=pair[1], setting=setting)
+        cv2.polylines(frame, vert_data_end, False, RGB[idx % 3], 2)
+    return frame
+ 
+	
+class Draw_Setting:
+    def __init__(self, height, width, capReader):
+        self.height = height
+        self.width = width
+        self.capReader = capReader
  
 
-
-
-
+def getTimeMask(timeSeries, timeRange):
+    start, end = timeRange
+    return (timeSeries < end)  &  (timeSeries > start)
+ 
+	
 '''
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--shape-predictor", required=True,
@@ -146,40 +176,13 @@ line_list = []
 threshline_list = []
 
 
-def getTimeVerticalLine(timeSecond, setting):
 
-    height, width, capReader = setting.height, setting.width, setting.capReader
-    correspond_framePos = capReader.time2frameIdx(timeSecond)
-    x_offset = (correspond_framePos / capReader.frame_counts) * width  
-
-    verticalLine_list = []
-    for i in np.linspace(0, height, 100):
-        verticalLine_list.append( (x_offset, i) )
-    vertical_data = np.array([verticalLine_list]).astype(np.int32)
-    return vertical_data
-
-
-def drawLines(frame, pairs, setting):
-    RGB = [(0,0,255), (0,255,0), (255,0,0)]
-    for idx, pair in enumerate(pairs):
-        vert_data_start = getTimeVerticalLine(timeSecond=pair[0], setting=setting)
-        cv2.polylines(frame, vert_data_start, False, RGB[idx % 3], 2)
-        vert_data_end = getTimeVerticalLine(timeSecond=pair[1], setting=setting)
-        cv2.polylines(frame, vert_data_end, False, RGB[idx % 3], 2)
-    return frame
 
 mar_list = []
 frame_list = []
 time_list = []
  
-
-class Draw_Setting:
-    def __init__(self, height, width, capReader):
-        self.height = height
-        self.width = width
-        self.capReader = capReader
-
-
+ 
 while(cap.isOpened()):
     ret, frame = cap.read()
 
@@ -259,10 +262,7 @@ print(len(mar_list))
 
 
 
-def getTimeMask(timeSeries, timeRange):
-    start, end = timeRange
-    return (timeSeries < end)  &  (timeSeries > start)
- 
+
 
 
 
